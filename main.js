@@ -17,8 +17,8 @@ var registerSubscriber = function(err_callback){
         method: "POST",
         json: true,
         body: {
-        command: "register",
             type: "notification",
+            command: "register",
         }
     }
 
@@ -49,7 +49,6 @@ var subscribe = function(subscriber_id, notification_store, err_callback){
             client: subscriber_id,
             mode: "pull",
             mbean: mbean,
-            filter: [],
             config: {
                 "myConfig": "extra config information"
             },
@@ -64,13 +63,15 @@ var subscribe = function(subscriber_id, notification_store, err_callback){
             if (body.status == 200){
                 var subscription_handle = body.value;
                 console.log("subscribed OK. subscriber_id="+subscriber_id+" store="+notification_store+" handle="+subscription_handle);
-                pollNotifications(subscriber_id, notification_store, subscription_handle);
+                pullNotifications(subscriber_id, notification_store, subscription_handle);
+            } else {
+                err_callback("Unexpected result: "+body)
             }
         }
     });
 }
 
-var pollNotifications = function(subscriber_id, notification_store, subscription_handle){
+var pullNotifications = function(subscriber_id, notification_store, subscription_handle){
     var uri = node_url+"/jolokia/"
     var poll_request = {
         uri: uri,
@@ -88,9 +89,10 @@ var pollNotifications = function(subscriber_id, notification_store, subscription
         if (err){
             return console.log(err);
         } else {
+            console.log('----------------------');
             console.log(body.value);
         }
-        setTimeout(pollNotifications, 3000, subscriber_id, notification_store, subscription_handle);
+        setTimeout(pullNotifications, 3000, subscriber_id, notification_store, subscription_handle);
     });
 }
 
